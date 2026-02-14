@@ -146,4 +146,7 @@ object ChordRepository {
         Chord("B7#9", "B", "7#9", listOf(-1, 2, 1, 2, 4, 3)),
         Chord("B9", "B", "9", listOf(-1, 2, 1, 2, 2, 2)),
     )
+    fun getChordsByRoot(root: String): List<Chord> {
+        return chords.filter { it.root == root }
+    }
 }
