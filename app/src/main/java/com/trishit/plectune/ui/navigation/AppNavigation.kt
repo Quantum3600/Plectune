@@ -5,10 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -20,8 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
@@ -30,6 +25,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.trishit.plectune.R
 import com.trishit.plectune.feature.chords.presentation.ChordScreen
 import com.trishit.plectune.feature.metronome.presentation.MetronomeScreen
 import com.trishit.plectune.feature.tuner.presentation.TunerScreen
@@ -37,25 +33,28 @@ import com.trishit.plectune.ui.components.LiquidBottomTab
 import com.trishit.plectune.ui.components.LiquidBottomTabs
 import com.trishit.plectune.ui.theme.PlectuneTheme
 
-sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Tuner : Screen("tuner", "Tuner", Icons.Default.Mic)
-    object Metronome : Screen("metronome", "Metronome", Icons.Default.Timer)
-    object Chords : Screen("chords", "Chords", Icons.Default.MusicNote)
+sealed class Screen(val route: String, val title: String, val icon: Int) {
+    object Tuner : Screen("tuner", "Tuner", R.drawable.tuner)
+    object Metronome : Screen("metronome", "Metronome", R.drawable.metro)
+    object Chords : Screen("chords", "Chords", R.drawable.chord_og)
 }
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val screens = listOf(Screen.Tuner, Screen.Metronome, Screen.Chords)
+    val screens = listOf(Screen.Metronome, Screen.Tuner, Screen.Chords)
 
     // 1. Track index for the Liquid Tabs
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    var selectedIndex by remember { mutableIntStateOf(1) }
 
     // 2. Sync NavController with Tabs
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // Get the color before passing to rememberLayerBackdrop (non-composable context)
+    val backgroundColor = MaterialTheme.colorScheme.background
     val backdrop = rememberLayerBackdrop {
-        drawRect(Color.Black)
+        drawRect(backgroundColor)
         drawContent()
     }
 
@@ -82,7 +81,7 @@ fun AppNavigation() {
                 },
                 backdrop = backdrop, // The "Glass" Base
                 tabsCount = screens.size,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp) // Floating look
+                modifier = Modifier.padding(horizontal = 56.dp, vertical = 24.dp) // Floating look
             ) {
                 // 4. Draw the Tabs
                 screens.forEachIndexed { index, screen ->
@@ -94,9 +93,9 @@ fun AppNavigation() {
                             modifier = Modifier.weight(1f) // Distribute evenly
                         ) {
                             Icon(
-                                imageVector = screen.icon,
+                                painter = painterResource(screen.icon),
                                 contentDescription = screen.title,
-                                tint = if (selectedIndex == index) Color.White else Color.Gray,
+                                tint = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
