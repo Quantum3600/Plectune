@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,11 +37,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.trishit.plectune.ui.components.LiquidSlider
 
 @Composable
 fun MetronomeScreen(
     viewModel: MetronomeViewModel = viewModel()
 ) {
+    val backdrop = rememberLayerBackdrop()
     val state by viewModel.uiState.collectAsState()
 
     // Pulse Animation
@@ -101,15 +103,17 @@ fun MetronomeScreen(
             }
 
             // Slider
-            Slider(
-                value = state.bpm.toFloat(),
+            LiquidSlider(
+                value = { state.bpm.toFloat() },
+                backdrop = backdrop,
+                visibilityThreshold = 0.01f,
                 onValueChange = { viewModel.onEvent(MetronomeEvent.SetBpm(it.toInt())) },
                 valueRange = 20f..300f,
                 colors = SliderDefaults.colors(
                     thumbColor = Color(0xFF32D74B),
                     activeTrackColor = Color(0xFF32D74B)
                 ),
-                modifier = Modifier.width(200.dp).padding(horizontal = 16.dp)
+                modifier = Modifier.width(300.dp).padding(horizontal = 16.dp)
             )
 
             // Plus Button

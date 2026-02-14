@@ -37,21 +37,29 @@ class MetronomeEngine {
         stop()
         isPlaying = true
         val bufferSize = tickSound.size * 2
-        audioTrack = AudioTrack.Builder()
-            .setAudioAttributes(AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build())
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(44100)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+
+        try {
+            audioTrack = AudioTrack.Builder()
+                .setAudioAttributes(AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build())
-            .setTransferMode(AudioTrack.MODE_STATIC)
-            .setBufferSizeInBytes(bufferSize)
-            .build()
-        audioTrack?.write(tickSound, 0, tickSound.size)
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(44100)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build())
+                .setTransferMode(AudioTrack.MODE_STATIC)
+                .setBufferSizeInBytes(bufferSize)
+                .build()
+
+            audioTrack?.write(tickSound, 0, tickSound.size)
+        } catch (e: Exception) {
+            isPlaying = false
+            throw e
+        }
+
         job = CoroutineScope(Dispatchers.Default).launch {
             val intervalMs = (60_000 / bpm).toLong()
             var nextTickTime = System.nanoTime()
@@ -59,11 +67,19 @@ class MetronomeEngine {
             while (isActive && isPlaying) {
                 val now = System.nanoTime()
                 if(now >= nextTickTime) {
-                    audioTrack?.stop()
-                    audioTrack?.reloadStaticData()
-                    audioTrack?.play()
-                    withContext(Dispatchers.Main) { onTick() }
-                    nextTickTime += intevalNanos
+                    try {
+                        val track = audioTrack
+                        if (track != null && track.state == AudioTrack.STATE_INITIALIZED) {
+                            track.stop()
+                            track.reloadStaticData()
+                            track.play()
+                            withContext(Dispatchers.Main) { onTick() }
+                            nextTickTime += intevalNanos
+                        }
+                    } catch (e: IllegalStateException) {
+                        // AudioTrack became invalid, stop playing
+                        isPlaying = false
+                    }
                 }
                 delay(1)
             }
