@@ -6,6 +6,8 @@ import com.trishit.plectune.feature.metronome.data.MetronomeEngine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -19,7 +21,19 @@ class MetronomeViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MetronomeUiState())
     val uiState = _uiState.asStateFlow()
 
-    private var startJob: Job? = null
+    private var bpmJob: Job? = null
+    private var tickCollectorJob: Job? = null
+
+    init {
+        // Collect ticks from the new engine flow
+        engine.tickFlow.onEach { (beatInBar, isAccent) ->
+            onTick(beatInBar = beatInBar, isAccent = isAccent)
+        }.launchIn(viewModelScope)
+        
+        // Collect BPM changes that might come from the native side (if implemented)
+        // For now, we rely on UI events setting the BPM, but if native code needs to update BPM,
+        // we would need engine.bpmFlow, which we don't have yet. For now, we only handle ticks.
+    }
 
     fun onEvent(event: MetronomeEvent) {
         when (event) {
@@ -40,6 +54,11 @@ class MetronomeViewModel : ViewModel() {
                         isAccentedBeat = true
                     )
                 }
+                if (_uiState.value.isPlaying) {
+                    viewModelScope.launch {
+                        engine.setBeatsPerBar(event.signature.beatsPerBar)
+                    }
+                }
             }
         }
     }
@@ -47,6 +66,13 @@ class MetronomeViewModel : ViewModel() {
     private fun updateBpm(newBpm: Int) {
         val clamped = newBpm.coerceIn(20, 300)
         _uiState.update { it.copy(bpm = clamped) }
+        // If the engine supported setting BPM dynamically via JNI, we would call it here:
+        // viewModelScope.launch { engine.nativeSetBpm(clamped) }
+        if (_uiState.value.isPlaying) {
+            viewModelScope.launch {
+                engine.setBpm(clamped)
+            }
+        }
     }
 
     private fun toggleMetronome() {
@@ -64,13 +90,13 @@ class MetronomeViewModel : ViewModel() {
             )
         }
 
-        startJob?.cancel()
-        startJob = viewModelScope.launch {
-            engine.start(
-                bpm = bpm,
-                beatsPerBar = beatsPerBar
-            ) { beatInBar, isAccent ->
-                onTick(beatInBar = beatInBar, isAccent = isAccent)
+        // Launch the native engine start
+        viewModelScope.launch {
+            if (engine.start(bpm = bpm, beatsPerBar = beatsPerBar)) {
+                // State is already updated above for initial beat/accent
+            } else {
+                // Native start failed, revert UI state
+                stopMetronome()
             }
         }
     }
@@ -83,16 +109,17 @@ class MetronomeViewModel : ViewModel() {
                 isAccentedBeat = true
             )
         }
-        startJob?.cancel()
-        startJob = null
-        engine.stop()
+        // Stop the native engine
+        viewModelScope.launch {
+            engine.stop()
+        }
     }
 
     private fun onTick(beatInBar: Int, isAccent: Boolean) {
         // event-style update; UI runs its own animation smoothly
         _uiState.update {
             it.copy(
-                tickId = it.tickId + 1L,
+                tickId = it.tickId + 1L, // Still use tickId to trigger Compose animation
                 beatInBar = beatInBar,
                 isAccentedBeat = isAccent
             )
@@ -125,7 +152,11 @@ class MetronomeViewModel : ViewModel() {
 
                     // Clamp the result: Ensure it's at least 30 BPM
                     val newBpm = calculatedBpm.coerceAtLeast(MIN_BPM)
-
+                    if (currentState.isPlaying) {
+                        viewModelScope.launch {
+                            engine.setBpm(newBpm)
+                        }
+                    }
                     // We only update BPM immediately based on the last interval for responsiveness.
                     // Increment tap count to track user effort/stability.
                     currentState.copy(
@@ -140,6 +171,9 @@ class MetronomeViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        stopMetronome()
+        // Ensure the native engine is stopped when ViewModel is cleared
+        viewModelScope.launch {
+            engine.stop()
+        }
     }
 }

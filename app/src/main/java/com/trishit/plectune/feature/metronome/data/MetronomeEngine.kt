@@ -1,154 +1,79 @@
 package com.trishit.plectune.feature.metronome.data
 
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioTrack
-import android.os.Process
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.math.roundToLong
-import kotlin.math.sin
 
 class MetronomeEngine {
 
-    private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // --- OBOE/JNI Implementation Placeholder ---
+    companion object {
+        init {
+            try {
+                // NOTE: This assumes 'metronome-native' library is built and placed correctly by CMake.
+                System.loadLibrary("metronome-native")
+                Log.i("MetronomeEngine", "Native metronome library loaded.")
+            } catch (e: UnsatisfiedLinkError) {
+                Log.e("MetronomeEngine", "Failed to load native library: metronome-native. Oboe will not work.", e)
+            }
+        }
+    }
 
+    private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val startStopMutex = Mutex()
     @Volatile private var isPlaying = false
 
-    private var normalTrack: AudioTrack? = null
-    private var accentTrack: AudioTrack? = null
     private var job: Job? = null
+    
+    // New state flow for ticks, replacing the callback lambda
+    private val _tickFlow = MutableSharedFlow<Pair<Int, Boolean>>(extraBufferCapacity = 10)
+    val tickFlow: SharedFlow<Pair<Int, Boolean>> = _tickFlow.asSharedFlow()
+    
+    // JNI Declarations (must match native C++ function signatures)
+    private external fun nativeStart(bpm: Int, beatsPerBar: Int): Boolean
+    private external fun nativeStop(): Boolean
+    private external fun nativeSetBpm(bpm: Int): Boolean
+    private external fun nativeSetBeatsPerBar(beatsPerBar: Int): Boolean
 
-    private fun generateClick(freqHz: Double, amplitude: Double): ShortArray {
-        val sampleRate = 44100
-        val durationMs = 30
-        val numSamples = sampleRate * durationMs / 1000
-        val buffer = ShortArray(numSamples)
-        for (i in 0 until numSamples) {
-            val time = i.toDouble() / sampleRate
-            val decay = 1.0 - (i.toDouble() / numSamples)
-            val sine = sin(2.0 * Math.PI * freqHz * time)
-            val v = sine * decay * amplitude
-            buffer[i] = (v * Short.MAX_VALUE).toInt().toShort()
+
+    // This method MUST be implemented in C++ (metronome_native.cpp)
+    // and called by the native Oboe scheduling loop when a beat occurs.
+    @Suppress("unused")
+    private fun onTickFromNative(beatInBar: Int, isAccent: Boolean) {
+        engineScope.launch {
+            // This runs on Default dispatcher because engineScope is Default.
+            // ViewModel will collect this and update UI state on Main dispatcher.
+            _tickFlow.emit(beatInBar to isAccent)
         }
-        return buffer
     }
-
-    private val normalClick: ShortArray by lazy { generateClick(freqHz = 1200.0, amplitude = 0.65) }
-    private val accentClick: ShortArray by lazy { generateClick(freqHz = 1700.0, amplitude = 0.95) }
-
-
-    suspend fun start(bpm: Int, beatsPerBar: Int, onTick: (beatInBar: Int, isAccent: Boolean) -> Unit) {
+    
+    // The public API must change to reflect that it no longer takes a lambda.
+    suspend fun start(bpm: Int, beatsPerBar: Int): Boolean {
         require(bpm > 0) { "bpm must be > 0" }
         require(beatsPerBar > 0) { "beatsPerBar must be > 0" }
 
-        startStopMutex.withLock {
-            stopLocked()
-
+        return startStopMutex.withLock {
+            if (isPlaying) stopLocked()
             isPlaying = true
 
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-
-            val audioFormat = AudioFormat.Builder()
-                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setSampleRate(44100)
-                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                .build()
-
-            fun buildStaticTrack(click: ShortArray): AudioTrack {
-                val bufferSizeBytes = click.size * 2
-                return AudioTrack.Builder()
-                    .setAudioAttributes(audioAttributes)
-                    .setAudioFormat(audioFormat)
-                    .setTransferMode(AudioTrack.MODE_STATIC)
-                    .setBufferSizeInBytes(bufferSizeBytes)
-                    .build()
-                    .also { it.write(click, 0, click.size) }
+            val ok = nativeStart(bpm, beatsPerBar)
+            if (!ok) {
+                Log.e("MetronomeEngine", "Native start failed.")
+                isPlaying = false
             }
-
-            normalTrack = buildStaticTrack(normalClick)
-            accentTrack = buildStaticTrack(accentClick)
-
-            val intervalNanos = (60_000_000_000.0 / bpm.toDouble()).roundToLong()
-
-            job = engineScope.launch {
-                try {
-                    Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
-                } catch (_: Throwable) {
-                    // ignore
-                }
-
-                var nextTickTime = System.nanoTime()
-                var beat = 0
-
-                while (isActive && isPlaying) {
-                    val now = System.nanoTime()
-                    val remaining = nextTickTime - now
-
-                    if (remaining > 0L) {
-                        val ms = remaining / 1_000_000L
-                        val ns = (remaining % 1_000_000L).toInt() // must be 0..999_999
-                        try {
-                            Thread.sleep(ms, ns)
-                        } catch (_: InterruptedException) {
-                            // allow cancellation
-                        } catch (_: IllegalArgumentException) {
-                            // shouldn't happen now; don't crash
-                        }
-                        continue
-                    }
-
-                    val beatInBar = beat % beatsPerBar
-                    val isAccent = beatInBar == 0
-
-                    val track = if (isAccent) accentTrack else normalTrack
-                    if (track == null || track.state != AudioTrack.STATE_INITIALIZED) {
-                        isPlaying = false
-                        break
-                    }
-
-                    try {
-                        // replay without reloading static data
-                        track.pause()
-                        try {
-                            track.flush()
-                        } catch (_: Throwable) {
-                            // some devices are picky; ignore if unsupported in this state
-                        }
-                        track.playbackHeadPosition = 0
-                        track.play()
-
-                        engineScope.launch(Dispatchers.Main.immediate) {
-                            onTick(beatInBar, isAccent)
-                        }
-                    } catch (_: IllegalStateException) {
-                        isPlaying = false
-                        break
-                    }
-
-                    beat++
-
-                    nextTickTime += intervalNanos
-                    while (nextTickTime <= System.nanoTime()) {
-                        nextTickTime += intervalNanos
-                    }
-                }
-            }
+            ok
         }
     }
 
     fun stop() {
-        // Non-suspending API for callers; serialize internally
         engineScope.launch {
             startStopMutex.withLock {
                 stopLocked()
@@ -156,42 +81,23 @@ class MetronomeEngine {
         }
     }
 
+    suspend fun setBpm(bpm: Int): Boolean {
+        require(bpm > 0) { "bpm must be > 0" }
+        return startStopMutex.withLock {
+            if (!isPlaying) return@withLock false
+            nativeSetBpm(bpm)
+        }
+    }
+    suspend fun setBeatsPerBar(beatsPerBar: Int): Boolean {
+        require(beatsPerBar > 0) { "beatsPerBar must be > 0" }
+        return startStopMutex.withLock {
+            if (!isPlaying) return@withLock false
+            nativeSetBeatsPerBar(beatsPerBar)
+        }
+    }
     private suspend fun stopLocked() {
+        if (!isPlaying) return
         isPlaying = false
-
-        val j = job
-        job = null
-        if (j != null) {
-            j.cancel()
-            j.join()
-        }
-
-        val n = normalTrack
-        val a = accentTrack
-        normalTrack = null
-        accentTrack = null
-
-        fun releaseTrack(t: AudioTrack?) {
-            if (t == null) return
-            try {
-                t.pause()
-                try {
-                    t.flush()
-                } catch (_: Throwable) {
-                    // ignore
-                }
-                t.stop()
-            } catch (_: Exception) {
-                // ignore
-            }
-            try {
-                t.release()
-            } catch (_: Exception) {
-                // ignore
-            }
-        }
-
-        releaseTrack(n)
-        releaseTrack(a)
+        nativeStop()
     }
 }

@@ -14,9 +14,10 @@ composeBom = "2026.02.00"
 materialIconsExtended = "1.7.8"
 navigationCompose = "2.9.7"
 shapes = "1.1.1"
-uiGraphics = "1.10.2"
-ui = "1.10.2"
+uiGraphics = "1.10.3"
+ui = "1.10.3"
 roomKtx = "2.8.4"
+oboe = "1.10.0"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
@@ -43,6 +44,7 @@ shapes = { module = "io.github.kyant0:shapes", version.ref = "shapes" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
+oboe = { group = "com.google.oboe", name = "oboe", version.ref = "oboe" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
