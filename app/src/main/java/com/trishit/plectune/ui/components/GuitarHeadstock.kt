@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.trishit.plectune.R
 import com.trishit.plectune.feature.tuner.domain.GuitarString
+import com.trishit.plectune.ui.theme.PlectuneGreen
 
 @Composable
 fun GuitarHeadstock(
@@ -109,13 +110,13 @@ fun BoxScope.PegButton(
 
     // Animate the Glow
     val glowColor by animateColorAsState(
-        targetValue = if (isActive) Color(0xFF32D74B) else Color.Transparent,
+        targetValue = if (isActive) PlectuneGreen else Color.Transparent,
         animationSpec = tween(300),
         label = "glow"
     )
 
     val borderColor by animateColorAsState(
-        targetValue = if (isActive) Color(0xFF32D74B) else Color.Gray.copy(alpha = 0.5f),
+        targetValue = if (isActive) PlectuneGreen else Color.Gray.copy(alpha = 0.5f),
         label = "border"
     )
 

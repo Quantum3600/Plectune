@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.trishit.plectune.ui.components.GuitarHeadstock
 import com.trishit.plectune.ui.components.TunerGauge
+import com.trishit.plectune.ui.theme.PlectuneGreen
 
 @Composable
 fun TunerScreen(
@@ -46,7 +47,7 @@ fun TunerScreen(
                 text = state.noteName,
                 fontSize = 120.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (state.isStable) Color(0xFF32D74B) else Color.White
+                color = if (state.isStable) PlectuneGreen else Color.White
             )
 
             Text(
@@ -57,7 +58,7 @@ fun TunerScreen(
                     "Pluck a string"
                 },
                 fontSize = 18.sp,
-                color = if (state.isStable) Color(0xFF32D74B) else Color.Gray
+                color = if (state.isStable) PlectuneGreen else Color.Gray
             )
         }
 
@@ -85,5 +86,4 @@ fun TunerScreen(
             onStringSelected = { viewModel.onEvent(TunerEvent.SelectString(it)) }
         )
     }
-
 }

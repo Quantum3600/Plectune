@@ -12,6 +12,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import com.trishit.plectune.ui.theme.DarkGrey750
+import com.trishit.plectune.ui.theme.PlectuneGreen
+import com.trishit.plectune.ui.theme.PlectuneRed
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -21,7 +24,7 @@ fun TunerGauge(
     history: List<Float>,
     isStable: Boolean
 ) {
-    val activeColor = if (isStable) Color(0xFF32D74B) else Color(0xFFFF453A)
+    val activeColor = if (isStable) PlectuneGreen else PlectuneRed
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val centerX = size.width / 2
@@ -30,7 +33,7 @@ fun TunerGauge(
 
         // Draw Scale
         drawArc(
-            color = Color(0xFF2C2C2C),
+            color = DarkGrey750,
             startAngle = 180f,
             sweepAngle = 180f,
             useCenter = false,

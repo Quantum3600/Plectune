@@ -48,6 +48,10 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
+import com.trishit.plectune.ui.theme.AppleGreen
+import com.trishit.plectune.ui.theme.AppleGreenDark
+import com.trishit.plectune.ui.theme.DarkGrey800
+import com.trishit.plectune.ui.theme.OffWhite
 import com.trishit.plectune.ui.utils.DampedDragAnimation
 import com.trishit.plectune.ui.utils.InteractiveHighlight
 import kotlinx.coroutines.flow.collectLatest
@@ -67,11 +71,11 @@ fun LiquidBottomTabs(
 ) {
     val isLightTheme = !isSystemInDarkTheme()
     val accentColor =
-        if (isLightTheme) Color(0xFF0088FF)
-        else Color(0xFF0091FF)
+        if (isLightTheme) AppleGreen
+        else AppleGreenDark
     val containerColor =
-        if (isLightTheme) Color(0xFFFAFAFA).copy(0.4f)
-        else Color(0xFF121212).copy(0.4f)
+        if (isLightTheme) OffWhite.copy(0.4f)
+        else DarkGrey800.copy(0.4f)
 
     val tabsBackdrop = rememberLayerBackdrop()
 

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.trishit.plectune.feature.chords.domain.Chord
+import com.trishit.plectune.ui.theme.PlectuneGreen
 
 @Composable
 fun FretboardView(
@@ -39,7 +40,7 @@ fun FretboardView(
 
             if (fret > 0) {
                 val y = (fret * fretSpacing) - (fretSpacing / 2)
-                drawCircle(Color(0xFF32D74B), 14f, Offset(x, y))
+                drawCircle(PlectuneGreen, 14f, Offset(x, y))
             } else if (fret == -1) {
                 // X (Muted)
                 val topY = 10f

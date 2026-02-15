@@ -29,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.trishit.plectune.ui.components.FretboardView
+import com.trishit.plectune.ui.theme.DarkGrey850
+import com.trishit.plectune.ui.theme.DarkGrey900
+import com.trishit.plectune.ui.theme.PlectuneGreen
 
 @Composable
 fun ChordScreen(
@@ -50,7 +53,7 @@ fun ChordScreen(
                     modifier = Modifier
                         .size(50.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) Color(0xFF32D74B) else Color(0xFF222222))
+                        .background(if (isSelected) PlectuneGreen else DarkGrey850)
                         .clickable { viewModel.onEvent(ChordEvent.SelectRoot(root)) }
                 ) {
                     Text(
@@ -73,7 +76,7 @@ fun ChordScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .background(Color(0xFF1A1A1A), RoundedCornerShape(16.dp))
+                        .background(DarkGrey900, RoundedCornerShape(16.dp))
                         .padding(16.dp)
                         .clickable { viewModel.onEvent(ChordEvent.PlayChord(chord)) }
                 ) {
