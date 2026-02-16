@@ -70,7 +70,7 @@ fun TunerScreen(
                 text = state.noteName,
                 fontSize = 64.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (state.isStable) PlectuneGreen else Color.White
+                color = if (state.isStable) PlectuneGreen else MaterialTheme.colorScheme.onBackground
             )
 
             Text(

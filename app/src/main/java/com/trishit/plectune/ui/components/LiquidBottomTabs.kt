@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -51,7 +52,7 @@ import com.kyant.shapes.Capsule
 import com.trishit.plectune.ui.theme.AppleGreen
 import com.trishit.plectune.ui.theme.AppleGreenDark
 import com.trishit.plectune.ui.theme.DarkGrey800
-import com.trishit.plectune.ui.theme.OffWhite
+import com.trishit.plectune.ui.theme.PlectuneGreen
 import com.trishit.plectune.ui.utils.DampedDragAnimation
 import com.trishit.plectune.ui.utils.InteractiveHighlight
 import kotlinx.coroutines.flow.collectLatest
@@ -74,8 +75,8 @@ fun LiquidBottomTabs(
         if (isLightTheme) AppleGreen
         else AppleGreenDark
     val containerColor =
-        if (isLightTheme) OffWhite.copy(0.4f)
-        else DarkGrey800.copy(0.4f)
+        if (isLightTheme) PlectuneGreen.copy(0.4f)
+        else DarkGrey800.copy(0.2f)
 
     val tabsBackdrop = rememberLayerBackdrop()
 
@@ -279,7 +280,7 @@ fun LiquidBottomTabs(
                         val progress = dampedDragAnimation.pressProgress
                         drawRect(
                             if (isLightTheme) Color.Black.copy(0.1f)
-                            else Color.White.copy(0.1f),
+                            else White.copy(0.1f),
                             alpha = 1f - progress
                         )
                         drawRect(Color.Black.copy(alpha = 0.03f * progress))

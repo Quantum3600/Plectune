@@ -252,7 +252,7 @@ fun ChordScreen(
                         ) {
                             Text(
                                 text = "${chord.root} ${chord.suffix}".trim(),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(bottom = 16.dp)

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -132,8 +133,8 @@ fun PegButton(
         content = {
             Text(
                 text = string.label,
-                color = if (isActive) PlectuneGreen else Color.White,
-                fontSize = 18.sp,
+                color = if (isActive) PlectuneGreen else MaterialTheme.colorScheme.onBackground,
+                fontSize = 21.sp,
                 fontWeight = FontWeight.Bold
             )
         }
