@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -170,7 +171,7 @@ fun LiquidSlider(
                             }
                             .size(4.dp)
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.7f))
+                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
                     )
 
                     // Label
@@ -179,7 +180,7 @@ fun LiquidSlider(
 
                     Text(
                         text = labelText,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 10.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier

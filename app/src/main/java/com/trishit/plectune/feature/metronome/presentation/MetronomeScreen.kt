@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,17 +67,19 @@ fun MetronomeScreen(
     }
     val pulse = remember { Animatable(0f) }
 
-    LaunchedEffect(state.tickId) {
-        // quick “thump” in, then ease out
-        pulse.snapTo(0f)
-        pulse.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(durationMillis = 90, easing = FastOutSlowInEasing)
-        )
-        pulse.animateTo(
-            targetValue = 0f,
-            animationSpec = tween(durationMillis = 140, easing = FastOutSlowInEasing)
-        )
+    LaunchedEffect(state.tickId, state.isPlaying) {
+        if (state.isPlaying) {
+            // quick “thump” in, then ease out
+            pulse.snapTo(0f)
+            pulse.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 90, easing = FastOutSlowInEasing)
+            )
+            pulse.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 140, easing = FastOutSlowInEasing)
+            )
+        }
     }
 
     Box(modifier = Modifier
@@ -94,7 +97,7 @@ fun MetronomeScreen(
     ) {
         Text(
             text = "${state.bpm} BPM",
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 48.sp,
             fontWeight = FontWeight.Bold
         )
@@ -169,7 +172,6 @@ fun MetronomeScreen(
                         modifier = Modifier.size(48.dp)
                     )
                 }
-//                Spacer(modifier = Modifier.width(8.dp))
                 LiquidButton(
                     backdrop = backdrop,
                     isInteractive = true,
@@ -204,7 +206,7 @@ fun MetronomeScreen(
                 val size = if (isDownBeat) 12.dp else 8.dp
                 val color = when {
                     isActive -> PlectuneGreen
-                    else -> Color.White.copy(alpha = 0.35f)
+                    else -> if(isSystemInDarkTheme()) Color.White.copy(alpha = 0.35f) else Color.Black.copy(alpha = 0.35f)
                 }
 
                 Box(
@@ -234,7 +236,7 @@ fun MetronomeScreen(
                 surfaceColor = PlectuneGreen.copy(0.15f),
                 modifier = Modifier.size(50.dp)
             ) {
-                Icon(Icons.Default.Remove, "Decrease", tint = Color.White)
+                Icon(Icons.Default.Remove, "Decrease", tint = MaterialTheme.colorScheme.onBackground)
             }
 
             // Slider
@@ -262,7 +264,7 @@ fun MetronomeScreen(
                 surfaceColor = PlectuneGreen.copy(0.15f),
                 modifier = Modifier.size(50.dp)
             ) {
-                Icon(Icons.Default.Add, "Increase", tint = Color.White)
+                Icon(Icons.Default.Add, "Increase", tint = MaterialTheme.colorScheme.onBackground)
             }
         }
 
@@ -283,8 +285,8 @@ fun MetronomeScreen(
                     onClick = { viewModel.onEvent(MetronomeEvent.SetTimeSignature(sig)) }
                 ) {
                     Text(
-                        text = sig.label,
-                        color = if (selected) PlectuneGreen else Color.White,
+                        text = if (selected) "1/4" else sig.label,
+                        color = if (selected) PlectuneGreen else MaterialTheme.colorScheme.onBackground,
                         fontSize = 14.sp,
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                     )

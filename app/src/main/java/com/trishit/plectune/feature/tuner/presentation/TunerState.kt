@@ -9,7 +9,8 @@ data class TunerUiState(
     val centsOff: Float = 0f,
     val isStable: Boolean = false,
     val activeString: GuitarString? = null,
-    val pitchHistory: List<Float> = emptyList()
+    val pitchHistory: List<Float> = emptyList(),
+    val autoTarget: GuitarString = GuitarString.E2
 )
 
 sealed class TunerMode {
@@ -19,7 +20,8 @@ sealed class TunerMode {
 
 sealed class TunerEvent {
     data class SelectString(val string: GuitarString) : TunerEvent()
-    object ToggleAutoMode : TunerEvent()
+    data class SetAutoMode(val enabled: Boolean) : TunerEvent()
+
     object StartListening : TunerEvent()
     object StopListening : TunerEvent()
 }

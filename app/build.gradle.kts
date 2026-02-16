@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.accompanist.navigation.animation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -45,6 +45,75 @@ class ToneGenerator {
         }
     }
 
+    suspend fun playConfirmationTone() {
+        stop()
+
+        withContext(Dispatchers.Default) {
+            val freq = 880f
+            val amplitude = 0.18f
+
+            val beepMs = 90
+            val gapMs = 60
+
+            val beepSamples = (SAMPLE_RATE * beepMs / 1000)
+            val gapSamples = (SAMPLE_RATE * gapMs / 1000)
+            val totalSamples = beepSamples + gapSamples + beepSamples
+
+            val buffer = ShortArray(totalSamples)
+
+            fun envelope(i: Int, n: Int): Float {
+                val attack = (n * 0.20f).toInt().coerceAtLeast(1)
+                val release = (n * 0.35f).toInt().coerceAtLeast(1)
+                return when {
+                    i < attack -> i.toFloat() / attack
+                    i > n - release -> (n - i).toFloat() / release
+                    else -> 1f
+                }
+            }
+
+            // Beep 1
+            for (i in 0 until beepSamples) {
+                val t = i.toDouble() / SAMPLE_RATE
+                val env = envelope(i, beepSamples)
+                val v = sin(2.0 * Math.PI * freq * t).toFloat() * amplitude * env
+                buffer[i] = (v * Short.MAX_VALUE).toInt().toShort()
+            }
+
+            // Gap is already zeros (silence)
+
+            // Beep 2
+            val start2 = beepSamples + gapSamples
+            for (i in 0 until beepSamples) {
+                val t = i.toDouble() / SAMPLE_RATE
+                val env = envelope(i, beepSamples)
+                val v = sin(2.0 * Math.PI * freq * t).toFloat() * amplitude * env
+                buffer[start2 + i] = (v * Short.MAX_VALUE).toInt().toShort()
+            }
+
+            val track = AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(SAMPLE_RATE)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build()
+                )
+                .setBufferSizeInBytes(buffer.size * 2)
+                .setTransferMode(AudioTrack.MODE_STATIC)
+                .build()
+
+            track.write(buffer, 0, buffer.size)
+            track.play()
+            audioTrack = track
+        }
+    }
+
     private fun generateComplexTone(fundamentalFreq: Float): ShortArray {
         val durationMs = 2000 // 2 seconds sustain
         val numSamples = (SAMPLE_RATE * durationMs / 1000)

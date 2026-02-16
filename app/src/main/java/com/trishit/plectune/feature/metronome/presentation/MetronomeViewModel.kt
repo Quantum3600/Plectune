@@ -42,19 +42,22 @@ class MetronomeViewModel : ViewModel() {
             is MetronomeEvent.SetBpm -> updateBpm(event.bpm)
             is MetronomeEvent.AdjustBpm -> updateBpm(_uiState.value.bpm + event.amount)
             is MetronomeEvent.SetTimeSignature -> {
+                val currentSig = _uiState.value.timeSignature
+                val targetSig = if (currentSig == event.signature) {
+                    TimeSignature(1, "1/4")
+                } else {
+                    event.signature
+                }
+
                 if (_uiState.value.isPlaying) stopMetronome()
                 _uiState.update {
                     it.copy(
-                        timeSignature = event.signature,
+                        timeSignature = targetSig,
                         beatInBar = 0,
                         isAccentedBeat = true
                     )
                 }
-                if (_uiState.value.isPlaying) {
-                    viewModelScope.launch {
-                        engine.setBeatsPerBar(event.signature.beatsPerBar)
-                    }
-                }
+                // Note: The metronome stops upon changing time signature in the current implementation.
             }
         }
     }

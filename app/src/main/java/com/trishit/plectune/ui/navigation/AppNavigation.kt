@@ -1,6 +1,10 @@
 package com.trishit.plectune.ui.navigation
 
 import android.content.res.Configuration
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,7 +39,7 @@ import com.trishit.plectune.feature.tuner.presentation.TunerScreen
 import com.trishit.plectune.ui.components.LiquidBottomTab
 import com.trishit.plectune.ui.components.LiquidBottomTabs
 import com.trishit.plectune.ui.components.ThemeSwitcher
-import com.trishit.plectune.ui.theme.PlectuneTheme
+import com.trishit.plectune.ui.theme.AnimatedPlectuneTheme
 
 sealed class Screen(val route: String, val title: String, val icon: Int) {
     object Tuner : Screen("tuner", "Tuner", R.drawable.tuner)
@@ -43,12 +47,13 @@ sealed class Screen(val route: String, val title: String, val icon: Int) {
     object Chords : Screen("chords", "Chords", R.drawable.chord_og)
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
     val systemDark = isSystemInDarkTheme()
     var isDarkTheme by remember { mutableStateOf(systemDark) }
 
-    PlectuneTheme(darkTheme = isDarkTheme) {
+    AnimatedPlectuneTheme(darkTheme = isDarkTheme) {
         val navController = rememberNavController()
         val screens = listOf(Screen.Metronome, Screen.Tuner, Screen.Chords)
 
@@ -113,7 +118,31 @@ fun AppNavigation() {
                     startDestination = Screen.Tuner.route,
                     modifier = Modifier
                         .layerBackdrop(backdrop)
-                        .padding(PaddingValues(top = innerPadding.calculateTopPadding()))
+                        .padding(PaddingValues(top = innerPadding.calculateTopPadding())),
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(300)
+                        )
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = tween(300)
+                        )
+                    }
                 ) {
                     composable(Screen.Tuner.route) { TunerScreen() }
                     composable(Screen.Metronome.route) { MetronomeScreen() }
@@ -140,7 +169,7 @@ fun AppNavigation() {
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun AppNavigationPreview() {
-    PlectuneTheme {
+    AnimatedPlectuneTheme {
         AppNavigation()
     }
 }

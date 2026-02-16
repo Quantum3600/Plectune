@@ -8,7 +8,7 @@ class Yin(
 ) {
     private val halfBufferSize = bufferSize / 2
     private val yinBuffer = FloatArray(halfBufferSize)
-    private val threshold = 0.10f
+    private val threshold = 0.20f
 
     var probability: Float = 0.0f
         private set
