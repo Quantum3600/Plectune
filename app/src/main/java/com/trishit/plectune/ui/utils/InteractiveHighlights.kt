@@ -6,7 +6,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -15,8 +14,6 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.PointerInputChange
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.util.fastCoerceIn
 import kotlinx.coroutines.CoroutineScope
@@ -98,8 +95,8 @@ half4 main(float2 coord) {
     val gestureModifier: Modifier =
         Modifier.pointerInput(animationScope) {
             inspectDragGestures(
-                onDragStart = { offset: Offset ->
-                    startPosition = offset
+                onDragStart = { down ->
+                    startPosition = down.position
                     animationScope.launch {
                         launch { pressProgressAnimation.animateTo(1f, pressProgressAnimationSpec) }
                         launch { positionAnimation.snapTo(startPosition) }
@@ -122,17 +119,4 @@ half4 main(float2 coord) {
             }
         }
 
-    suspend fun PointerInputScope.inspectDragGestures(
-        onDragStart: (Offset) -> Unit = {},
-        onDragEnd: () -> Unit = {},
-        onDragCancel: () -> Unit = {},
-        onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit
-    ) {
-        detectDragGestures(
-            onDragStart = onDragStart,
-            onDragEnd = onDragEnd,
-            onDragCancel = onDragCancel,
-            onDrag = onDrag
-        )
-    }
 }

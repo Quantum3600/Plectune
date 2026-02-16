@@ -3,12 +3,9 @@ package com.trishit.plectune.ui.utils
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.MutatorMutex
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.PointerInputChange
-import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.unit.IntSize
@@ -67,8 +64,8 @@ class DampedDragAnimation(
 
     val modifier: Modifier = Modifier.pointerInput(Unit) {
         inspectDragGestures(
-            onDragStart = { offset: Offset ->
-                onDragStarted(offset)
+            onDragStart = { down ->
+                onDragStarted(down.position)
                 press()
             },
             onDragEnd = {
@@ -138,17 +135,4 @@ class DampedDragAnimation(
         animationScope.launch { velocityAnimation.animateTo(targetVelocity, velocityAnimationSpec) }
     }
 
-    suspend fun PointerInputScope.inspectDragGestures(
-        onDragStart: (Offset) -> Unit = {},
-        onDragEnd: () -> Unit = {},
-        onDragCancel: () -> Unit = {},
-        onDrag: (change: PointerInputChange, dragAmount: Offset) -> Unit
-    ) {
-        detectDragGestures(
-            onDragStart = onDragStart,
-            onDragEnd = onDragEnd,
-            onDragCancel = onDragCancel,
-            onDrag = onDrag
-        )
-    }
 }

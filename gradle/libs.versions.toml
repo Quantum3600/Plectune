@@ -1,4 +1,5 @@
 [versions]
+accompanistNavigationAnimation = "0.36.0"
 agp = "9.0.1"
 backdrop = "2.0.0-alpha02"
 coreKtx = "1.17.0"
@@ -14,11 +15,13 @@ composeBom = "2026.02.00"
 materialIconsExtended = "1.7.8"
 navigationCompose = "2.9.7"
 shapes = "1.1.1"
-uiGraphics = "1.10.2"
-ui = "1.10.2"
+uiGraphics = "1.10.3"
+ui = "1.10.3"
 roomKtx = "2.8.4"
+oboe = "1.10.0"
 
 [libraries]
+accompanist-navigation-animation = { module = "com.google.accompanist:accompanist-navigation-animation", version.ref = "accompanistNavigationAnimation" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
@@ -43,6 +46,7 @@ shapes = { module = "io.github.kyant0:shapes", version.ref = "shapes" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
+oboe = { group = "com.google.oboe", name = "oboe", version.ref = "oboe" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
