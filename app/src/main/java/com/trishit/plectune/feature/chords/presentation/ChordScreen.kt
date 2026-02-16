@@ -1,7 +1,7 @@
 package com.trishit.plectune.feature.chords.presentation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,17 +9,18 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,20 +28,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.trishit.plectune.R
+import com.trishit.plectune.ui.components.AppTextureBackground
 import com.trishit.plectune.ui.components.FretboardView
-import com.trishit.plectune.ui.theme.DarkGrey850
-import com.trishit.plectune.ui.theme.DarkGrey900
+import com.trishit.plectune.ui.components.LiquidButton
 import com.trishit.plectune.ui.theme.PlectuneGreen
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,25 +60,43 @@ fun ChordScreen(
     viewModel: ChordViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val backdrop = rememberLayerBackdrop {
+        drawRect(backgroundColor)
+        drawContent()
+    }
+    
+    val rootsListState = rememberLazyListState()
+    val variantsListState = rememberLazyListState()
+    
     val pagerState = rememberPagerState(
         initialPage = state.selectedVariantIndex,
         pageCount = { state.displayedChords.size.coerceAtLeast(1) }
     )
 
-    // When user taps a variant chip, drive the pager.
-    LaunchedEffect(state.selectedVariantIndex, state.displayedChords.size) {
-        val target = state.selectedVariantIndex.coerceIn(
-            0,
-            (state.displayedChords.size - 1).coerceAtLeast(0)
-        )
-        if (state.displayedChords.isNotEmpty() && pagerState.currentPage != target) {
-            pagerState.animateScrollToPage(target)
+    val listItemWidth = 96.dp
+    val density = LocalDensity.current
+    val itemWidthPx = with(density) { listItemWidth.toPx() }
+
+    // Sync State -> Pager (HorizontalPager)
+    // We use a separate state to track the last seen root to distinguish between 
+    // root changes (which should snap the pager) and variant changes (which should animate).
+    var lastRoot by remember { mutableStateOf(state.selectedRoot) }
+    LaunchedEffect(state.selectedRoot, state.selectedVariantIndex) {
+        if (state.displayedChords.isNotEmpty()) {
+            if (lastRoot != state.selectedRoot) {
+                // Root changed: Snap to the new root's first variant
+                pagerState.scrollToPage(state.selectedVariantIndex)
+                lastRoot = state.selectedRoot
+            } else if (pagerState.currentPage != state.selectedVariantIndex) {
+                // Variant changed (via click or list sync): Animate the pager
+                pagerState.animateScrollToPage(state.selectedVariantIndex)
+            }
         }
     }
 
-    // When user swipes pager, update selected variant chip.
-    LaunchedEffect(pagerState, state.displayedChords.size) {
+    // Sync Pager -> State
+    LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
             .collect { page ->
@@ -79,15 +109,48 @@ fun ChordScreen(
             }
     }
 
+    // Auto-scroll roots list to center the selected root
+    LaunchedEffect(state.selectedRoot) {
+        val selectedIndex = state.availableRoots.indexOf(state.selectedRoot)
+        if (selectedIndex >= 0) {
+            snapshotFlow { rootsListState.layoutInfo.viewportSize.width }
+                .filter { it > 0 }
+                .first()
+
+            val viewportWidth = rootsListState.layoutInfo.viewportSize.width
+            val centerOffset = (viewportWidth - itemWidthPx.toInt()) / 2 - 42
+            rootsListState.animateScrollToItem(index = selectedIndex, scrollOffset = -centerOffset)
+        }
+    }
+
+    // Auto-scroll variants list to center the selected variant
+    LaunchedEffect(state.selectedVariantIndex) {
+        if (state.displayedChords.isNotEmpty() && state.selectedVariantIndex in state.displayedChords.indices) {
+            snapshotFlow { variantsListState.layoutInfo.viewportSize.width }
+                .filter { it > 0 }
+                .first()
+
+            val viewportWidth = variantsListState.layoutInfo.viewportSize.width
+            val centerOffset = (viewportWidth - itemWidthPx.toInt()) / 2 - 42
+            variantsListState.animateScrollToItem(index = state.selectedVariantIndex, scrollOffset = -centerOffset)
+        }
+    }
+
+    Box(Modifier
+        .fillMaxSize()
+        .layerBackdrop(backdrop)) {
+        AppTextureBackground(modifier = Modifier.fillMaxSize())
+    }
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 48.dp)
+            .padding(vertical = 64.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 12.dp) // extra top padding under the app bar (as requested)
+                .padding(top = 12.dp)
         ) {
             // 1) Horizontal list of 12 roots
             LazyRow(
@@ -95,22 +158,26 @@ fun ChordScreen(
                     .fillMaxWidth()
                     .padding(vertical = 12.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                state = rootsListState,
+                flingBehavior = rememberSnapFlingBehavior(rootsListState)
             ) {
                 itemsIndexed(state.availableRoots) { _, root ->
                     val isSelected = root == state.selectedRoot
-                    Box(
-                        contentAlignment = Alignment.Center,
+                    LiquidButton(
+                        onClick = { viewModel.onEvent(ChordEvent.SelectRoot(root)) },
+                        isInteractive = true,
                         modifier = Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) PlectuneGreen else DarkGrey850)
-                            .clickable { viewModel.onEvent(ChordEvent.SelectRoot(root)) }
+                            .width(listItemWidth)
+                            .height(60.dp),
+                        surfaceColor = if (isSelected) PlectuneGreen.copy(0.6f) else Color.Transparent,
+                        backdrop = backdrop,
                     ) {
                         Text(
                             text = root,
-                            color = if (isSelected) Color.Black else Color.White,
-                            fontWeight = FontWeight.Bold
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 22.sp
                         )
                     }
                 }
@@ -122,25 +189,34 @@ fun ChordScreen(
                     .fillMaxWidth()
                     .padding(bottom = 12.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                state = variantsListState,
+                flingBehavior = rememberSnapFlingBehavior(variantsListState)
             ) {
                 itemsIndexed(state.displayedChords) { index, chord ->
                     val isSelected = index == state.selectedVariantIndex
                     val label = chord.suffix.ifBlank { chord.name }
 
-                    Box(
+                    LiquidButton(
+                        onClick = { viewModel.onEvent(ChordEvent.SelectVariant(index)) },
+                        isInteractive = true,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(if (isSelected) PlectuneGreen else DarkGrey900)
-                            .clickable { viewModel.onEvent(ChordEvent.SelectVariant(index)) }
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                            .padding(horizontal = 2.dp)
+                            .width(listItemWidth),
+                        surfaceColor = if (isSelected) PlectuneGreen.copy(0.5f) else Color.Transparent,
+                        backdrop = backdrop,
                     ) {
-                        Text(
-                            text = label,
-                            color = if (isSelected) Color.Black else Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                            Text(
+                                text = label,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 18.sp
+                            )
+                        }
                     }
                 }
             }
@@ -150,9 +226,7 @@ fun ChordScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(DarkGrey900),
+                    .padding(horizontal = 16.dp, vertical = 48.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (state.displayedChords.isEmpty()) {
@@ -168,9 +242,11 @@ fun ChordScreen(
                         contentPadding = PaddingValues(horizontal = 24.dp),
                         pageSpacing = 16.dp
                     ) { page ->
-                        val chord = state.displayedChords[page]
+                        val chord = state.displayedChords.getOrNull(page) ?: return@HorizontalPager
                         Column(
-                            modifier = Modifier.fillMaxSize().padding(18.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(18.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
@@ -191,20 +267,40 @@ fun ChordScreen(
                 }
             }
 
-            // spacer at bottom so FAB doesn't overlap pager content too much
-            Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) { /* intentionally empty */ }
-        }
-
-        // Play button in bottom-left corner (moved from chord click)
-        FloatingActionButton(
-            onClick = { viewModel.onEvent(ChordEvent.PlaySelected) },
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp),
-            containerColor = PlectuneGreen,
-            contentColor = Color.Black
-        ) {
-            Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = "Play chord")
+            // Play button in bottom-left corner
+            Row(
+                Modifier.fillMaxWidth().padding(bottom = 32.dp, start = 16.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LiquidButton(
+                    onClick = { viewModel.onEvent(ChordEvent.PlaySelected) },
+                    isInteractive = true,
+                    modifier = Modifier
+                        .width(72.dp),
+                    surfaceColor = PlectuneGreen.copy(alpha = 0.2f),
+                    backdrop = backdrop,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Speaker,
+                        contentDescription = "Play chord",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                Box(Modifier.width(48.dp)) {
+                    Image(
+                        painterResource(R.drawable.hand),
+                        contentScale = ContentScale.Fit,
+                        contentDescription = "Finger indicator",
+                    )
+                }
+            }
         }
     }
+}
+
+@Preview
+@Composable
+fun ChordScreenPreview() {
+    ChordScreen()
 }

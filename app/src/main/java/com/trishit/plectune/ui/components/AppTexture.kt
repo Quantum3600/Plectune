@@ -22,8 +22,8 @@ import kotlin.random.Random
 
 @Composable
 fun AppTextureBackground(
-    gridSize: Dp = 48.dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    gridSize: Dp = 40.dp
 ) {
     val density = LocalDensity.current
     val containerSize = remember { mutableStateOf(IntSize(500, 1000)) }
@@ -48,7 +48,7 @@ fun AppTextureBackground(
         )
 
         // Create a grid-based distribution
-        val cellSize = gridSizePx * 1.8f // Space between grid points
+        val cellSize = gridSizePx * 1.5f // Space between grid points
         val colsCount = (width / cellSize).toInt().coerceAtLeast(1)
         val rowsCount = (height / cellSize).toInt().coerceAtLeast(1)
 

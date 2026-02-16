@@ -5,5 +5,10 @@ data class Chord(
     val root: String,
     val suffix: String,
     val frets: List<Int>,
-    // -1 for Muted, 0 for open, consecutive same for barre
+    val fingers: List<Int>? = null, // 1:Index, 2:Middle, 3:Ring, 4:Pinky, 5:Thumb
+    val isBarre: Boolean = false,
+    val barreStartString: Int? = null,
+    val barreEndString: Int? = null,
+    val barreFret: Int? = null,
+    val barreFinger: Int? = 1
 )
