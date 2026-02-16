@@ -44,6 +44,7 @@ import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.util.lerp
 import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberBackdrop
 import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
@@ -67,6 +68,7 @@ fun LiquidSlider(
     valueRange: ClosedFloatingPointRange<Float>,
     visibilityThreshold: Float,
     backdrop: Backdrop,
+    exportedBackdrop: LayerBackdrop? = null,
     colors: SliderColors = SliderDefaults.colors(),
     dragSensitivity: Float = 1f, // Added parameter for fine-tuning
     snapPoints: List<Float> = remember { listOf(30f, 75f, 135f, 195f, 240f) }, // Default snap points
@@ -163,7 +165,7 @@ fun LiquidSlider(
                             .offset {
                                 IntOffset(
                                     x = xPositionPx.toInt() - with(density) { (4.dp / 2).roundToPx() }, // Center the dot (dot size 4.dp)
-                                    y = -with(density) { 15.dp.toPx() }.toInt() // Adjust vertical offset above track
+                                    y = -with(density) { 8.dp.toPx() }.toInt() // Adjust vertical offset above track
                                 )
                             }
                             .size(4.dp)
@@ -184,7 +186,7 @@ fun LiquidSlider(
                             .offset {
                                 IntOffset(
                                     x = xPositionPx.fastRoundToInt() - (labelWidthPx / 2),
-                                    y = with(density) { 16.dp.toPx() }.toInt() // Adjust vertical offset below track
+                                    y = with(density) { 20.dp.toPx() }.toInt() // Adjust vertical offset below track
                                 )
                             }
                     )
@@ -268,6 +270,7 @@ fun LiquidSlider(
                                     }
                                 }
                             ),
+                            exportedBackdrop = exportedBackdrop,
                             shape = { Capsule },
                             effects = {
                                 val progress = dampedDragAnimation.pressProgress

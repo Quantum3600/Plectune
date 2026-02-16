@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.trishit.plectune.feature.chords.domain.Chord
@@ -16,7 +17,7 @@ fun FretboardView(
     modifier: Modifier,
     chord: Chord
 ) {
-    Canvas(modifier = Modifier.size(120.dp, 160.dp)) {
+    Canvas(modifier = modifier.then(Modifier.size(120.dp, 160.dp))) {
         val w = size.width
         val h = size.height
         val stringSpacing = w / 5
@@ -34,7 +35,38 @@ fun FretboardView(
             drawLine(Color.Gray, Offset(x, 0f), Offset(x, h), strokeWidth = 2f + (i * 0.5f))
         }
 
-        // Draw Dots
+        // ---- Barre support (requested): if consecutive 1s exist, draw a line (barre) ----
+        // We interpret "consecutive 1s" as adjacent strings having fret == 1.
+        run {
+            val frets = chord.frets
+            var i = 0
+            while (i < frets.size) {
+                if (frets[i] == 1) {
+                    val start = i
+                    var end = i
+                    while (end + 1 < frets.size && frets[end + 1] == 1) end++
+
+                    if (end > start) {
+                        val y = (1 * fretSpacing) - (fretSpacing / 2)
+                        val xStart = start * stringSpacing
+                        val xEnd = end * stringSpacing
+
+                        drawLine(
+                            color = PlectuneGreen,
+                            start = Offset(xStart, y),
+                            end = Offset(xEnd, y),
+                            strokeWidth = 18f,
+                            cap = StrokeCap.Round
+                        )
+                    }
+                    i = end + 1
+                } else {
+                    i++
+                }
+            }
+        }
+
+        // Draw Dots / X / O
         chord.frets.forEachIndexed { stringIndex, fret ->
             val x = stringIndex * stringSpacing
 

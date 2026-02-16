@@ -3,7 +3,6 @@ package com.trishit.plectune.feature.metronome.data
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -30,8 +29,6 @@ class MetronomeEngine {
     private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val startStopMutex = Mutex()
     @Volatile private var isPlaying = false
-
-    private var job: Job? = null
     
     // New state flow for ticks, replacing the callback lambda
     private val _tickFlow = MutableSharedFlow<Pair<Int, Boolean>>(extraBufferCapacity = 10)
@@ -95,7 +92,7 @@ class MetronomeEngine {
             nativeSetBeatsPerBar(beatsPerBar)
         }
     }
-    private suspend fun stopLocked() {
+    private fun stopLocked() {
         if (!isPlaying) return
         isPlaying = false
         nativeStop()

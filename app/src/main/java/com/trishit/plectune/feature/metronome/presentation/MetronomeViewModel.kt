@@ -3,7 +3,6 @@ package com.trishit.plectune.feature.metronome.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.trishit.plectune.feature.metronome.data.MetronomeEngine
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -20,9 +19,6 @@ class MetronomeViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(MetronomeUiState())
     val uiState = _uiState.asStateFlow()
-
-    private var bpmJob: Job? = null
-    private var tickCollectorJob: Job? = null
 
     init {
         // Collect ticks from the new engine flow

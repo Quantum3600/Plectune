@@ -23,14 +23,25 @@ class ChordViewModel : ViewModel() {
                 _uiState.update { it.copy(selectedRoot = event.root) }
                 loadChords(event.root)
             }
+            is ChordEvent.SelectVariant -> {
+                _uiState.update { it.copy(selectedVariantIndex = event.index) }
+            }
             is ChordEvent.PlayChord -> { // Add this event to your Sealed Class
                 chordPlayer.playChord(event.chord)
+            }
+            ChordEvent.PlaySelected -> {
+                _uiState.value.selectedChord?.let { chordPlayer.playChord(it) }
             }
         }
     }
 
     private fun loadChords(root: String) {
         val chords = ChordRepository.getChordsByRoot(root)
-        _uiState.update { it.copy(displayedChords = chords) }
+        _uiState.update {
+            it.copy(
+                displayedChords = chords,
+                selectedVariantIndex = it.selectedVariantIndex.coerceIn(0, (chords.size - 1).coerceAtLeast(0)),
+            )
+        }
     }
 }

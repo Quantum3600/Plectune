@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -43,7 +42,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.trishit.plectune.ui.components.AppTextureBackground
 import com.trishit.plectune.ui.components.LiquidButton
 import com.trishit.plectune.ui.components.LiquidSlider
 import com.trishit.plectune.ui.theme.DarkGrey850
@@ -55,16 +56,18 @@ import kotlin.math.sin
 
 @Composable
 fun MetronomeScreen(
-    viewModel: MetronomeViewModel = viewModel()
+    viewModel: MetronomeViewModel = viewModel(),
 ) {
-    val backdrop = rememberLayerBackdrop()
     val state by viewModel.uiState.collectAsState()
-
+    val bgColor = MaterialTheme.colorScheme.background
+    val backdrop = rememberLayerBackdrop() {
+        drawRect(bgColor)
+        drawContent()
+    }
     val pulse = remember { Animatable(0f) }
 
     LaunchedEffect(state.tickId) {
         // quick “thump” in, then ease out
-        val strength = if (state.isAccentedBeat) 1.15f else 0.85f
         pulse.snapTo(0f)
         pulse.animateTo(
             targetValue = 1f,
@@ -76,10 +79,16 @@ fun MetronomeScreen(
         )
     }
 
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .layerBackdrop(backdrop)
+    ) {
+        AppTextureBackground(modifier = Modifier.fillMaxSize())
+    }
+
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -147,7 +156,7 @@ fun MetronomeScreen(
                     modifier = Modifier
                         .padding(8.dp)
                         .size(80.dp),
-                    surfaceColor = PlectuneGreen.copy(alpha = 0.3f),
+                    surfaceColor = PlectuneGreen.copy(alpha = 0.1f),
                     onClick = {
                         viewModel.onEvent(MetronomeEvent.BeginBpmInteraction)
                         viewModel.onEvent(MetronomeEvent.TapTempo)
@@ -155,18 +164,18 @@ fun MetronomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.TouchApp,
-                        contentDescription = "Play/Stop",
+                        contentDescription = "Tap Tempo",
                         tint = PlectuneGreen,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(48.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+//                Spacer(modifier = Modifier.width(8.dp))
                 LiquidButton(
                     backdrop = backdrop,
                     isInteractive = true,
                     modifier = Modifier
                         .padding(8.dp)
-                        .size(80.dp),
+                        .size(92.dp),
                     surfaceColor = PlectuneGreen.copy(alpha = 0.3f),
                     onClick = { viewModel.onEvent(MetronomeEvent.TogglePlay) },
                 ) {
@@ -174,7 +183,7 @@ fun MetronomeScreen(
                         imageVector = if (state.isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
                         contentDescription = "Play/Stop",
                         tint = PlectuneGreen,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(72.dp)
                     )
                 }
             }
@@ -222,6 +231,7 @@ fun MetronomeScreen(
                 onClick = { viewModel.onEvent(MetronomeEvent.AdjustBpm(-1)) },
                 isInteractive = true,
                 backdrop = backdrop,
+                surfaceColor = PlectuneGreen.copy(0.15f),
                 modifier = Modifier.size(50.dp)
             ) {
                 Icon(Icons.Default.Remove, "Decrease", tint = Color.White)
@@ -249,6 +259,7 @@ fun MetronomeScreen(
                 onClick = { viewModel.onEvent(MetronomeEvent.AdjustBpm(1)) },
                 isInteractive = true,
                 backdrop = backdrop,
+                surfaceColor = PlectuneGreen.copy(0.15f),
                 modifier = Modifier.size(50.dp)
             ) {
                 Icon(Icons.Default.Add, "Increase", tint = Color.White)
@@ -268,7 +279,7 @@ fun MetronomeScreen(
                     backdrop = backdrop,
                     isInteractive = true,
                     modifier = Modifier.size(width = 64.dp, height = 40.dp),
-                    surfaceColor = if (selected) PlectuneGreen.copy(alpha = 0.25f) else DarkGrey850,
+                    surfaceColor = if (selected) PlectuneGreen.copy(alpha = 0.25f) else Color.Transparent,
                     onClick = { viewModel.onEvent(MetronomeEvent.SetTimeSignature(sig)) }
                 ) {
                     Text(
@@ -283,6 +294,8 @@ fun MetronomeScreen(
         Spacer(Modifier.height(32.dp))
     }
 }
+
+
 @Preview(uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun MetronomeScreenPreview() {
