@@ -5,6 +5,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -147,6 +149,26 @@ fun AppNavigation() {
                     composable(Screen.Tuner.route) { TunerScreen() }
                     composable(Screen.Metronome.route) { MetronomeScreen() }
                     composable(Screen.Chords.route) { ChordScreen() }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        // Apply top padding first to clear status bar/scaffold area
+                        .padding(top = innerPadding.calculateTopPadding())
+                        // Then add some margin from the edges
+                        .padding(start = 16.dp, top = 8.dp)
+                        // Set a fixed size for the container
+                        .size(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.guitar_pick_logo_transparent),
+                        contentDescription = "Logo",
+                        // Use Fit to ensure the whole logo is visible without cropping
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
 
                 // Theme Switcher in the top right corner

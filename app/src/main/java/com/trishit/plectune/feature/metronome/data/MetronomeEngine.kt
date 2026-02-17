@@ -1,6 +1,7 @@
 package com.trishit.plectune.feature.metronome.data
 
 import android.util.Log
+import androidx.annotation.Keep
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -10,7 +11,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
+@Keep
 class MetronomeEngine {
 
     // --- OBOE/JNI Implementation Placeholder ---
