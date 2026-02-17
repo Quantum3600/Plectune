@@ -95,7 +95,7 @@ Unlike typical tuner apps, Plectune doesn't compromise. It's built by a musician
   <img src="https://img.shields.io/badge/Download-Latest%20APK-success?style=for-the-badge&logo=android" alt="Download Latest APK" height="50">
 </a>
 
-**Requirements**: Android 11+ (API 30+) • ~15 MB • No Ads • No Tracking • 100% Free
+**Requirements**: Android 11+ (API 30+) • ~7 MB • No Ads • No Tracking • 100% Free
 
 </div>
 
