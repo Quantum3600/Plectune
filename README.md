@@ -101,15 +101,15 @@ Unlike typical tuner apps, Plectune doesn't compromise. It's built by a musician
 
 ---
 
-## 🎨 Demo
+## 🎨 Screenshots
 
 <div align="center">
 
-### 📱 See Plectune In Action
+### 📱 See The Beauty of Plectune 
 
 | 🎸 **Tuner** | ⏱️ **Metronome** | 🎼 **Chords** |
 |:---:|:---:|:---:|
-| *(Demo GIF Coming Soon)* | *(Demo GIF Coming Soon)* | *(Demo GIF Coming Soon)* |
+| ![Tuner](asset/Screenshot_2026-02-16-21-16-38-533_com.trishit.plectune.jpg) | ![Tuner](asset/Screenshot_2026-02-17-02-22-05-468_com.trishit.plectune.jpg) | ![Tuner](asset/Screenshot_2026-02-17-02-23-35-653_com.trishit.plectune.jpg) |
 | *Real-time pitch tracking with living graph* | *Physics-based pulse visualizer* | *Interactive chord explorer* |
 
 **🎥 Full Demo Video**: *(Coming Soon)*
