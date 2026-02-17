@@ -787,9 +787,8 @@ Found a bug? Have a feature idea? Just want to say hi?
 
 <div align="center">
 
-```
-Made with ❤️, ☕, and Kotlin
-```
+
+**Made with ❤️, ☕, and Kotlin**
 
 **🎵 Plectune - Because Your Music Deserves Better Tools 🎵**
 
