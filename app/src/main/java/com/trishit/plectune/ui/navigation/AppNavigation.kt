@@ -5,6 +5,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,6 +60,7 @@ fun AppNavigation() {
         val screens = listOf(Screen.Metronome, Screen.Tuner, Screen.Chords)
 
         var selectedIndex by remember { mutableIntStateOf(1) }
+        var navDirection by remember { mutableIntStateOf(0) } // -1: left, 1: right, 0: none
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -71,6 +74,11 @@ fun AppNavigation() {
         LaunchedEffect(currentRoute) {
             val index = screens.indexOfFirst { it.route == currentRoute }
             if (index != -1) {
+                navDirection = when {
+                    index > selectedIndex -> 1 // right
+                    index < selectedIndex -> -1 // left
+                    else -> 0
+                }
                 selectedIndex = index
             }
         }
@@ -81,6 +89,11 @@ fun AppNavigation() {
                 LiquidBottomTabs(
                     selectedTabIndex = { selectedIndex },
                     onTabSelected = { index ->
+                        navDirection = when {
+                            index > selectedIndex -> 1 // right
+                            index < selectedIndex -> -1 // left
+                            else -> 0
+                        }
                         selectedIndex = index
                         navController.navigate(screens[index].route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -120,33 +133,81 @@ fun AppNavigation() {
                         .layerBackdrop(backdrop)
                         .padding(PaddingValues(top = innerPadding.calculateTopPadding())),
                     enterTransition = {
-                        slideInHorizontally(
-                            initialOffsetX = { it },
-                            animationSpec = tween(300)
-                        )
+                        if (navDirection >= 0) {
+                            slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = tween(300)
+                            )
+                        } else {
+                            slideInHorizontally(
+                                initialOffsetX = { -it },
+                                animationSpec = tween(300)
+                            )
+                        }
                     },
                     exitTransition = {
-                        slideOutHorizontally(
-                            targetOffsetX = { -it },
-                            animationSpec = tween(300)
-                        )
+                        if (navDirection >= 0) {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = tween(300)
+                            )
+                        } else {
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = tween(300)
+                            )
+                        }
                     },
                     popEnterTransition = {
-                        slideInHorizontally(
-                            initialOffsetX = { -it },
-                            animationSpec = tween(300)
-                        )
+                        if (navDirection < 0) {
+                            slideInHorizontally(
+                                initialOffsetX = { -it },
+                                animationSpec = tween(300)
+                            )
+                        } else {
+                            slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = tween(300)
+                            )
+                        }
                     },
                     popExitTransition = {
-                        slideOutHorizontally(
-                            targetOffsetX = { it },
-                            animationSpec = tween(300)
-                        )
+                        if (navDirection < 0) {
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = tween(300)
+                            )
+                        } else {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it },
+                                animationSpec = tween(300)
+                            )
+                        }
                     }
                 ) {
                     composable(Screen.Tuner.route) { TunerScreen() }
                     composable(Screen.Metronome.route) { MetronomeScreen() }
                     composable(Screen.Chords.route) { ChordScreen() }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        // Apply top padding first to clear status bar/scaffold area
+                        .padding(top = innerPadding.calculateTopPadding())
+                        // Then add some margin from the edges
+                        .padding(start = 16.dp, top = 8.dp)
+                        // Set a fixed size for the container
+                        .size(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.guitar_pick_logo_transparent),
+                        contentDescription = "Logo",
+                        // Use Fit to ensure the whole logo is visible without cropping
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
 
                 // Theme Switcher in the top right corner
