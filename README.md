@@ -21,7 +21,6 @@
 [![Android API](https://img.shields.io/badge/API-30%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=30)
 [![Kotlin](https://img.shields.io/badge/Kotlin-95.2%25-7F52FF.svg?style=flat&logo=kotlin)](https://kotlinlang.org)
 [![C++](https://img.shields.io/badge/C++-4.5%25-00599C.svg?style=flat&logo=c%2B%2B)](https://isocpp.org/)
-[![Made with Love](https://img.shields.io/badge/Made%20with-%E2%9D%A4%EF%B8%8F%2C%20%E2%98%95%2C%20and%20Kotlin-ff69b4)](https://github.com/Quantum3600/Plectune)
 
 <p align="center">
   <i>Plectune brings the sophisticated, physics-driven UI interactions of iOS to Android, combining professional-grade audio precision with a stunning Liquid Glass interface that feels like magic in your hands.</i>
