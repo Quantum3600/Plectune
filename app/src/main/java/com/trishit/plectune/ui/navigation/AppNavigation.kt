@@ -60,6 +60,7 @@ fun AppNavigation() {
         val screens = listOf(Screen.Metronome, Screen.Tuner, Screen.Chords)
 
         var selectedIndex by remember { mutableIntStateOf(1) }
+        var previousIndex by remember { mutableIntStateOf(1) }
         var navDirection by remember { mutableIntStateOf(0) } // -1: left, 1: right, 0: none
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -75,10 +76,11 @@ fun AppNavigation() {
             val index = screens.indexOfFirst { it.route == currentRoute }
             if (index != -1) {
                 navDirection = when {
-                    index > selectedIndex -> 1 // right
-                    index < selectedIndex -> -1 // left
+                    index > previousIndex -> 1 // right
+                    index < previousIndex -> -1 // left
                     else -> 0
                 }
+                previousIndex = selectedIndex
                 selectedIndex = index
             }
         }
@@ -94,6 +96,7 @@ fun AppNavigation() {
                             index < selectedIndex -> -1 // left
                             else -> 0
                         }
+                        previousIndex = selectedIndex
                         selectedIndex = index
                         navController.navigate(screens[index].route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
